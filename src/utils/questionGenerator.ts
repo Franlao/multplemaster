@@ -1,12 +1,7 @@
 import { Question, QuizSettings } from "../types/quiz";
 
 export function generateQuestions(settings: QuizSettings): Question[] {
-  const { tableMode, selectedTable, questionMode, questionCount } = settings;
-
-  const tables =
-    tableMode === "specific" && selectedTable !== undefined
-      ? [selectedTable]
-      : getRandomTables(questionCount);
+  const { tableMode, selectedTable, selectedTables, questionMode, questionCount } = settings;
 
   const questions: Question[] = [];
 
@@ -20,16 +15,37 @@ export function generateQuestions(settings: QuizSettings): Question[] {
     multipliers.forEach((multiplier, index) => {
       questions.push(createQuestion(selectedTable, multiplier, index));
     });
+  } else if (tableMode === "multiple" && selectedTables && selectedTables.length > 0) {
+    // Generate questions for multiple selected tables
+    const questionsPerTable = Math.floor(questionCount / selectedTables.length);
+    const extraQuestions = questionCount % selectedTables.length;
+
+    selectedTables.forEach((table, tableIndex) => {
+      const questionsForThisTable = questionsPerTable + (tableIndex < extraQuestions ? 1 : 0);
+
+      if (questionMode === "sequential") {
+        const multipliers = getSequentialMultipliers(questionsForThisTable);
+        multipliers.forEach((multiplier, index) => {
+          questions.push(createQuestion(table, multiplier, questions.length));
+        });
+      } else {
+        const multipliers = getRandomMultipliers(questionsForThisTable);
+        multipliers.forEach((multiplier, index) => {
+          questions.push(createQuestion(table, multiplier, questions.length));
+        });
+      }
+    });
   } else {
     // Generate questions with random tables
+    const tables = getRandomTables(questionCount);
     for (let i = 0; i < questionCount; i++) {
       const table = tables[i % tables.length];
-      const multiplier = Math.floor(Math.random() * 21); // 0-20
+      const multiplier = Math.floor(Math.random() * 36); // 0-35
       questions.push(createQuestion(table, multiplier, i));
     }
   }
 
-  return questionMode === "random" && tableMode === "specific"
+  return questionMode === "random" && (tableMode === "specific" || tableMode === "multiple")
     ? shuffleArray(questions)
     : questions;
 }
@@ -65,7 +81,7 @@ function getRandomMultipliers(count: number): number[] {
 function getRandomTables(count: number): number[] {
   const tables: number[] = [];
   for (let i = 0; i < count; i++) {
-    tables.push(Math.floor(Math.random() * 21)); // 0-20
+    tables.push(Math.floor(Math.random() * 36)); // 0-35
   }
   return tables;
 }

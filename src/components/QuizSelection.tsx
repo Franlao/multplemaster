@@ -10,13 +10,25 @@ interface QuizSelectionProps {
 export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
   const [tableMode, setTableMode] = useState<TableMode>("specific");
   const [selectedTable, setSelectedTable] = useState<number>(1);
+  const [selectedTables, setSelectedTables] = useState<number[]>([1, 2]);
   const [questionMode, setQuestionMode] = useState<QuestionMode>("sequential");
   const [questionCount, setQuestionCount] = useState<number>(21);
+
+  const toggleTableSelection = (table: number) => {
+    setSelectedTables(prev => {
+      if (prev.includes(table)) {
+        return prev.filter(t => t !== table);
+      } else {
+        return [...prev, table].sort((a, b) => a - b);
+      }
+    });
+  };
 
   const handleStartQuiz = () => {
     const settings: QuizSettings = {
       tableMode,
       selectedTable: tableMode === "specific" ? selectedTable : undefined,
+      selectedTables: tableMode === "multiple" ? selectedTables : undefined,
       questionMode,
       questionCount:
         tableMode === "specific" ? Math.min(questionCount, 21) : questionCount,
@@ -43,7 +55,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             Choix de la table
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <button
               onClick={() => setTableMode("specific")}
               className={`p-4 rounded-xl border-2 transition-all duration-200 ${
@@ -55,6 +67,20 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
               <div className="text-lg font-medium">Table spécifique</div>
               <div className="text-sm opacity-70">
                 Choisir une table précise
+              </div>
+            </button>
+
+            <button
+              onClick={() => setTableMode("multiple")}
+              className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                tableMode === "multiple"
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+              }`}
+            >
+              <div className="text-lg font-medium">Tables multiples</div>
+              <div className="text-sm opacity-70">
+                Sélectionner plusieurs tables
               </div>
             </button>
 
@@ -77,10 +103,10 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
           {tableMode === "specific" && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Table de multiplication (0-20)
+                Table de multiplication (0-35)
               </label>
-              <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: 21 }, (_, i) => i).map((num) => (
+              <div className="grid grid-cols-6 gap-2">
+                {Array.from({ length: 36 }, (_, i) => i).map((num) => (
                   <button
                     key={num}
                     onClick={() => setSelectedTable(num)}
@@ -88,6 +114,33 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                       selectedTable === num
                         ? "border-blue-500 bg-blue-500 text-white"
                         : "border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500"
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Multiple Tables Selection */}
+          {tableMode === "multiple" && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tables de multiplication (sélectionnez plusieurs)
+              </label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedTables.length} table{selectedTables.length > 1 ? 's' : ''} sélectionnée{selectedTables.length > 1 ? 's' : ''}: {selectedTables.join(', ')}
+              </p>
+              <div className="grid grid-cols-6 gap-2">
+                {Array.from({ length: 36 }, (_, i) => i).map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => toggleTableSelection(num)}
+                    className={`p-3 rounded-lg border text-center transition-all duration-200 ${
+                      selectedTables.includes(num)
+                        ? "border-purple-500 bg-purple-500 text-white"
+                        : "border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500"
                     }`}
                   >
                     {num}
@@ -140,23 +193,28 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
           </label>
           <input
             type="range"
-            min={tableMode === "specific" ? 1 : 5}
-            max={tableMode === "specific" ? 21 : 50}
+            min={tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}
+            max={tableMode === "specific" ? 21 : tableMode === "multiple" ? selectedTables.length * 21 : 50}
             value={questionCount}
             onChange={(e) => setQuestionCount(parseInt(e.target.value, 10))}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
           />
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>{tableMode === "specific" ? 1 : 5}</span>
+            <span>{tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}</span>
             <span className="font-medium">{questionCount} questions</span>
-            <span>{tableMode === "specific" ? 21 : 50}</span>
+            <span>{tableMode === "specific" ? 21 : tableMode === "multiple" ? selectedTables.length * 21 : 50}</span>
           </div>
         </div>
 
         {/* Start Button */}
         <button
           onClick={handleStartQuiz}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 text-lg"
+          disabled={tableMode === "multiple" && selectedTables.length === 0}
+          className={`w-full font-semibold py-4 px-6 rounded-xl transition-colors duration-200 text-lg ${
+            tableMode === "multiple" && selectedTables.length === 0
+              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
         >
           Commencer le quiz
         </button>

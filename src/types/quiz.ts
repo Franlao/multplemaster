@@ -1,5 +1,5 @@
 export type QuestionMode = "sequential" | "random";
-export type TableMode = "specific" | "random";
+export type TableMode = "specific" | "multiple" | "random";
 export type SessionStatus = "selecting" | "active" | "completed";
 
 export interface Question {
@@ -16,6 +16,7 @@ export interface Question {
 export interface QuizSettings {
   tableMode: TableMode;
   selectedTable?: number;
+  selectedTables?: number[];
   questionMode: QuestionMode;
   questionCount: number;
 }

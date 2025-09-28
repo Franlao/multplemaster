@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ultrathink - Tables de multiplication",
   description:
-    "Plateforme moderne et intuitive pour maîtriser vos tables de multiplication de 0 à 20",
+    "Plateforme moderne et intuitive pour maîtriser vos tables de multiplication de 0 à 35",
 };
 
 export default function RootLayout({
