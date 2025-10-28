@@ -4,7 +4,7 @@ import { useState } from "react";
 import { QuizSettings, TableMode, QuestionMode, Operation, AdvancedSettings as AdvancedSettingsType } from "../types/quiz";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X } from "lucide-react";
+import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdvancedSettings } from "./AdvancedSettings";
 
@@ -89,6 +89,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                 <AdvancedSettings
                   settings={advancedSettings}
                   onSettingsChange={handleAdvancedSettingsChange}
+                  isActive={useAdvancedSettings}
                 />
               </div>
             </div>
@@ -159,14 +160,48 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             </div>
           </div>
 
-          {/* Number Selection */}
-          <div className="space-y-3 sm:space-y-4">
-            <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-              Choix des nombres
-            </h3>
+          {/* Advanced Settings Active Indicator */}
+          {useAdvancedSettings && (
+            <div className="p-3 sm:p-4 rounded-lg bg-primary/10 border-2 border-primary">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-primary" />
+                    <span className="font-semibold text-sm sm:text-base">Paramètres avancés actifs</span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                    <div>
+                      <strong>Nombres:</strong>{" "}
+                      {advancedSettings.tableSelectionMode === "range"
+                        ? `${advancedSettings.tableRangeMin} à ${advancedSettings.tableRangeMax}`
+                        : `${advancedSettings.specificTables.length} sélectionné(s)`}
+                    </div>
+                    <div>
+                      <strong>Multiplicateurs:</strong> {advancedSettings.multiplierMin} à {advancedSettings.multiplierMax}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUseAdvancedSettings(false)}
+                  className="h-8 text-xs"
+                >
+                  Désactiver
+                </Button>
+              </div>
+            </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+          {/* Number Selection */}
+          {!useAdvancedSettings && (
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                Choix des nombres
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => setTableMode("specific")}
                 className={cn(
@@ -268,7 +303,8 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Question Mode Selection */}
           <div className="space-y-3 sm:space-y-4">
