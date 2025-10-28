@@ -1,47 +1,46 @@
-import { Question, QuizSettings } from "../types/quiz";
+import { Question, QuizSettings, Operation } from "../types/quiz";
 
 export function generateQuestions(settings: QuizSettings): Question[] {
-  const { tableMode, selectedTable, selectedTables, questionMode, questionCount } = settings;
+  const { operation, tableMode, selectedTable, selectedTables, questionMode, questionCount } = settings;
 
   const questions: Question[] = [];
 
   if (tableMode === "specific" && selectedTable !== undefined) {
-    // Generate questions for a specific table
-    const multipliers =
+    // Generate questions for a specific number
+    const secondNumbers =
       questionMode === "sequential"
-        ? getSequentialMultipliers(questionCount)
-        : getRandomMultipliers(questionCount);
+        ? getSequentialNumbers(questionCount, operation)
+        : getRandomNumbers(questionCount, operation);
 
-    multipliers.forEach((multiplier, index) => {
-      questions.push(createQuestion(selectedTable, multiplier, index));
+    secondNumbers.forEach((secondNumber, index) => {
+      questions.push(createQuestion(operation, selectedTable, secondNumber, index));
     });
   } else if (tableMode === "multiple" && selectedTables && selectedTables.length > 0) {
-    // Generate questions for multiple selected tables
-    const questionsPerTable = Math.floor(questionCount / selectedTables.length);
+    // Generate questions for multiple selected numbers
+    const questionsPerNumber = Math.floor(questionCount / selectedTables.length);
     const extraQuestions = questionCount % selectedTables.length;
 
-    selectedTables.forEach((table, tableIndex) => {
-      const questionsForThisTable = questionsPerTable + (tableIndex < extraQuestions ? 1 : 0);
+    selectedTables.forEach((firstNumber, numberIndex) => {
+      const questionsForThisNumber = questionsPerNumber + (numberIndex < extraQuestions ? 1 : 0);
 
       if (questionMode === "sequential") {
-        const multipliers = getSequentialMultipliers(questionsForThisTable);
-        multipliers.forEach((multiplier, index) => {
-          questions.push(createQuestion(table, multiplier, questions.length));
+        const secondNumbers = getSequentialNumbers(questionsForThisNumber, operation);
+        secondNumbers.forEach((secondNumber) => {
+          questions.push(createQuestion(operation, firstNumber, secondNumber, questions.length));
         });
       } else {
-        const multipliers = getRandomMultipliers(questionsForThisTable);
-        multipliers.forEach((multiplier, index) => {
-          questions.push(createQuestion(table, multiplier, questions.length));
+        const secondNumbers = getRandomNumbers(questionsForThisNumber, operation);
+        secondNumbers.forEach((secondNumber) => {
+          questions.push(createQuestion(operation, firstNumber, secondNumber, questions.length));
         });
       }
     });
   } else {
-    // Generate questions with random tables
-    const tables = getRandomTables(questionCount);
+    // Generate questions with random numbers
     for (let i = 0; i < questionCount; i++) {
-      const table = tables[i % tables.length];
-      const multiplier = Math.floor(Math.random() * 36); // 0-35
-      questions.push(createQuestion(table, multiplier, i));
+      const firstNumber = getRandomNumberForOperation(operation);
+      const secondNumber = getRandomNumberForOperation(operation);
+      questions.push(createQuestion(operation, firstNumber, secondNumber, i));
     }
   }
 
@@ -51,39 +50,69 @@ export function generateQuestions(settings: QuizSettings): Question[] {
 }
 
 function createQuestion(
-  table: number,
-  multiplier: number,
+  operation: Operation,
+  firstNumber: number,
+  secondNumber: number,
   index: number,
 ): Question {
+  let correctAnswer: number;
+  let opSymbol: string;
+
+  switch (operation) {
+    case "addition":
+      correctAnswer = firstNumber + secondNumber;
+      opSymbol = "+";
+      break;
+    case "subtraction":
+      // Ensure result is not negative
+      if (firstNumber < secondNumber) {
+        [firstNumber, secondNumber] = [secondNumber, firstNumber];
+      }
+      correctAnswer = firstNumber - secondNumber;
+      opSymbol = "-";
+      break;
+    case "multiplication":
+      correctAnswer = firstNumber * secondNumber;
+      opSymbol = "×";
+      break;
+  }
+
   return {
-    id: `${table}x${multiplier}-${index}-${Date.now()}`,
-    table,
-    multiplier,
-    correctAnswer: table * multiplier,
+    id: `${firstNumber}${opSymbol}${secondNumber}-${index}-${Date.now()}`,
+    operation,
+    firstNumber,
+    secondNumber,
+    correctAnswer,
     attempts: 0,
     timeAsked: new Date(),
+    // Legacy fields for backward compatibility
+    table: firstNumber,
+    multiplier: secondNumber,
   };
 }
 
-function getSequentialMultipliers(count: number): number[] {
-  const multipliers: number[] = [];
-  for (let i = 0; i < Math.min(count, 21); i++) {
-    multipliers.push(i);
+function getSequentialNumbers(count: number, operation: Operation): number[] {
+  const numbers: number[] = [];
+  const maxRange = operation === "multiplication" ? 21 : 101; // 0-20 for mult, 0-100 for add/sub
+
+  for (let i = 0; i < Math.min(count, maxRange); i++) {
+    numbers.push(i);
   }
-  return multipliers;
+  return numbers;
 }
 
-function getRandomMultipliers(count: number): number[] {
-  const multipliers = Array.from({ length: 21 }, (_, i) => i);
-  return shuffleArray(multipliers).slice(0, count);
+function getRandomNumbers(count: number, operation: Operation): number[] {
+  const maxRange = operation === "multiplication" ? 21 : 101;
+  const numbers = Array.from({ length: maxRange }, (_, i) => i);
+  return shuffleArray(numbers).slice(0, count);
 }
 
-function getRandomTables(count: number): number[] {
-  const tables: number[] = [];
-  for (let i = 0; i < count; i++) {
-    tables.push(Math.floor(Math.random() * 36)); // 0-35
+function getRandomNumberForOperation(operation: Operation): number {
+  if (operation === "multiplication") {
+    return Math.floor(Math.random() * 36); // 0-35 for multiplication
+  } else {
+    return Math.floor(Math.random() * 101); // 0-100 for addition/subtraction
   }
-  return tables;
 }
 
 function shuffleArray<T>(array: T[]): T[] {

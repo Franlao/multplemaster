@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { QuizSettings, TableMode, QuestionMode } from "../types/quiz";
+import { QuizSettings, TableMode, QuestionMode, Operation } from "../types/quiz";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices } from "lucide-react";
+import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface QuizSelectionProps {
@@ -12,11 +12,23 @@ interface QuizSelectionProps {
 }
 
 export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
+  const [operation, setOperation] = useState<Operation>("multiplication");
   const [tableMode, setTableMode] = useState<TableMode>("specific");
   const [selectedTable, setSelectedTable] = useState<number>(1);
   const [selectedTables, setSelectedTables] = useState<number[]>([1, 2]);
   const [questionMode, setQuestionMode] = useState<QuestionMode>("sequential");
   const [questionCount, setQuestionCount] = useState<number>(21);
+
+  const getMaxRange = () => operation === "multiplication" ? 36 : 101;
+  const getMaxQuestions = () => operation === "multiplication" ? 21 : 101;
+
+  const getOperationLabel = () => {
+    switch (operation) {
+      case "addition": return "addition";
+      case "subtraction": return "soustraction";
+      case "multiplication": return "multiplication";
+    }
+  };
 
   const toggleTableSelection = (table: number) => {
     setSelectedTables(prev => {
@@ -29,13 +41,15 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
   };
 
   const handleStartQuiz = () => {
+    const maxQuestions = getMaxQuestions();
     const settings: QuizSettings = {
+      operation,
       tableMode,
       selectedTable: tableMode === "specific" ? selectedTable : undefined,
       selectedTables: tableMode === "multiple" ? selectedTables : undefined,
       questionMode,
       questionCount:
-        tableMode === "specific" ? Math.min(questionCount, 21) : questionCount,
+        tableMode === "specific" ? Math.min(questionCount, maxQuestions) : questionCount,
     };
     onStartQuiz(settings);
   };
@@ -49,16 +63,80 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
               Ultrathink
             </CardTitle>
             <CardDescription className="text-sm sm:text-base">
-              Maîtrisez vos tables de multiplication
+              Maîtrisez vos opérations mathématiques
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6">
-          {/* Table Selection */}
+          {/* Operation Selection */}
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+              <Dices className="w-4 h-4 sm:w-5 sm:h-5" />
+              Type d'opération
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <button
+                onClick={() => setOperation("addition")}
+                className={cn(
+                  "p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 text-left touch-manipulation",
+                  operation === "addition"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-primary/50 active:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <div className="font-semibold text-sm sm:text-base">Addition</div>
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Calculer des sommes
+                </div>
+              </button>
+
+              <button
+                onClick={() => setOperation("subtraction")}
+                className={cn(
+                  "p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 text-left touch-manipulation",
+                  operation === "subtraction"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-primary/50 active:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Minus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <div className="font-semibold text-sm sm:text-base">Soustraction</div>
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Calculer des différences
+                </div>
+              </button>
+
+              <button
+                onClick={() => setOperation("multiplication")}
+                className={cn(
+                  "p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 text-left touch-manipulation",
+                  operation === "multiplication"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-primary/50 active:border-primary/50"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <X className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <div className="font-semibold text-sm sm:text-base">Multiplication</div>
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Calculer des produits
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Number Selection */}
           <div className="space-y-3 sm:space-y-4">
             <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-              Choix de la table
+              Choix des nombres
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
@@ -76,7 +154,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                   <div className="font-semibold text-sm sm:text-base">Table spécifique</div>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Choisir une table précise
+                  Choisir un nombre précis
                 </div>
               </button>
 
@@ -94,7 +172,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                   <div className="font-semibold text-sm sm:text-base">Tables multiples</div>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Sélectionner plusieurs tables
+                  Sélectionner plusieurs nombres
                 </div>
               </button>
 
@@ -112,19 +190,19 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                   <div className="font-semibold text-sm sm:text-base">Tables aléatoires</div>
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  Mélange de toutes les tables
+                  Nombres aléatoires
                 </div>
               </button>
             </div>
 
-            {/* Table Number Selection */}
+            {/* Number Selection */}
             {tableMode === "specific" && (
               <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-muted/50">
                 <label className="block text-xs sm:text-sm font-medium">
-                  Table de multiplication (0-35)
+                  Nombre de base (0-{getMaxRange() - 1})
                 </label>
                 <div className="grid grid-cols-4 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-9 gap-1.5 sm:gap-2">
-                  {Array.from({ length: 36 }, (_, i) => i).map((num) => (
+                  {Array.from({ length: getMaxRange() }, (_, i) => i).map((num) => (
                     <Button
                       key={num}
                       variant={selectedTable === num ? "default" : "outline"}
@@ -139,17 +217,17 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
               </div>
             )}
 
-            {/* Multiple Tables Selection */}
+            {/* Multiple Numbers Selection */}
             {tableMode === "multiple" && (
               <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-muted/50">
                 <label className="block text-xs sm:text-sm font-medium">
-                  Tables de multiplication (sélectionnez plusieurs)
+                  Nombres de base (sélectionnez plusieurs)
                 </label>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  {selectedTables.length} table{selectedTables.length > 1 ? 's' : ''} sélectionnée{selectedTables.length > 1 ? 's' : ''}: {selectedTables.join(', ')}
+                  {selectedTables.length} nombre{selectedTables.length > 1 ? 's' : ''} sélectionné{selectedTables.length > 1 ? 's' : ''}: {selectedTables.join(', ')}
                 </p>
                 <div className="grid grid-cols-4 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-9 gap-1.5 sm:gap-2">
-                  {Array.from({ length: 36 }, (_, i) => i).map((num) => (
+                  {Array.from({ length: getMaxRange() }, (_, i) => i).map((num) => (
                     <Button
                       key={num}
                       variant={selectedTables.includes(num) ? "default" : "outline"}
@@ -217,7 +295,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             <input
               type="range"
               min={tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}
-              max={tableMode === "specific" ? 21 : tableMode === "multiple" ? selectedTables.length * 21 : 50}
+              max={tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? selectedTables.length * getMaxQuestions() : 50}
               value={questionCount}
               onChange={(e) => setQuestionCount(parseInt(e.target.value, 10))}
               className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary touch-manipulation"
@@ -225,7 +303,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
               <span>{tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}</span>
               <span className="font-semibold text-foreground">{questionCount} questions</span>
-              <span>{tableMode === "specific" ? 21 : tableMode === "multiple" ? selectedTables.length * 21 : 50}</span>
+              <span>{tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? selectedTables.length * getMaxQuestions() : 50}</span>
             </div>
           </div>
 

@@ -131,9 +131,21 @@ export function useSpeechSynthesis() {
   }, [isSupported]);
 
   const speakQuestion = useCallback(
-    (table: number, multiplier: number) => {
+    (firstNumber: number, secondNumber: number, operation: "addition" | "subtraction" | "multiplication") => {
+      let text = "";
+      switch (operation) {
+        case "addition":
+          text = `${firstNumber} plus ${secondNumber} égale ?`;
+          break;
+        case "subtraction":
+          text = `${firstNumber} moins ${secondNumber} égale ?`;
+          break;
+        case "multiplication":
+          text = `${firstNumber} fois ${secondNumber} égale ?`;
+          break;
+      }
       speak({
-        text: `${table} fois ${multiplier} égale ?`,
+        text,
         rate: 0.9,
         lang: "fr-FR",
       });

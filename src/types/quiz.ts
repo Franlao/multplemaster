@@ -1,19 +1,25 @@
 export type QuestionMode = "sequential" | "random";
 export type TableMode = "specific" | "multiple" | "random";
 export type SessionStatus = "selecting" | "active" | "completed";
+export type Operation = "addition" | "subtraction" | "multiplication";
 
 export interface Question {
   id: string;
-  table: number;
-  multiplier: number;
+  operation: Operation;
+  firstNumber: number;
+  secondNumber: number;
   correctAnswer: number;
   userAnswer?: number;
   attempts: number;
   isCorrect?: boolean;
   timeAsked: Date;
+  // Legacy fields for backward compatibility
+  table?: number;
+  multiplier?: number;
 }
 
 export interface QuizSettings {
+  operation: Operation;
   tableMode: TableMode;
   selectedTable?: number;
   selectedTables?: number[];

@@ -125,7 +125,7 @@ export default function QuizGame({
           {/* Question Display */}
           <div className="text-center space-y-4 sm:space-y-6">
             <div className="text-4xl sm:text-5xl md:text-6xl font-bold py-4">
-              {currentQuestion.table} × {currentQuestion.multiplier} = ?
+              {currentQuestion.firstNumber} {currentQuestion.operation === "addition" ? "+" : currentQuestion.operation === "subtraction" ? "−" : "×"} {currentQuestion.secondNumber} = ?
             </div>
 
             {!showFeedback ? (
@@ -205,8 +205,9 @@ export default function QuizGame({
 
           {/* Voice Controls */}
           <VoiceControls
-            table={currentQuestion.table}
-            multiplier={currentQuestion.multiplier}
+            table={currentQuestion.firstNumber}
+            multiplier={currentQuestion.secondNumber}
+            operation={currentQuestion.operation}
             onVoiceAnswer={handleVoiceAnswer}
             isCorrect={isCorrect}
             correctAnswer={currentQuestion.correctAnswer}

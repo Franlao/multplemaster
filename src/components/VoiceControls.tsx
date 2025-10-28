@@ -8,10 +8,12 @@ import { Checkbox } from "./ui/checkbox";
 import { Card, CardContent } from "./ui/card";
 import { Volume2, VolumeX, Mic, MicOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Operation } from "../types/quiz";
 
 interface VoiceControlsProps {
   table: number;
   multiplier: number;
+  operation: Operation;
   onVoiceAnswer: (answer: number) => void;
   isCorrect?: boolean;
   correctAnswer?: number;
@@ -22,6 +24,7 @@ interface VoiceControlsProps {
 export default function VoiceControls({
   table,
   multiplier,
+  operation,
   onVoiceAnswer,
   isCorrect,
   correctAnswer,
@@ -81,7 +84,7 @@ export default function VoiceControls({
     if (isPlaying) {
       cancelSpeech();
     } else {
-      speakQuestion(table, multiplier);
+      speakQuestion(table, multiplier, operation);
     }
   };
 

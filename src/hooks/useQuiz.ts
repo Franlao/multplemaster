@@ -117,6 +117,7 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
       const reviewSession: QuizSession = {
         id: `review-session-${Date.now()}`,
         settings: {
+          operation: action.questions[0]?.operation || "multiplication",
           tableMode: "specific",
           selectedTable: undefined,
           questionMode: "sequential",
@@ -182,15 +183,16 @@ export default function useQuiz() {
 
         // Update table-specific stats
         session.questions.forEach((question) => {
-          if (!newStats.tableStats[question.table]) {
-            newStats.tableStats[question.table] = {
+          const numberKey = question.firstNumber;
+          if (!newStats.tableStats[numberKey]) {
+            newStats.tableStats[numberKey] = {
               attempts: 0,
               correct: 0,
               accuracy: 0,
             };
           }
 
-          const tableStats = newStats.tableStats[question.table];
+          const tableStats = newStats.tableStats[numberKey];
           tableStats.attempts += 1;
           if (question.isCorrect) {
             tableStats.correct += 1;
