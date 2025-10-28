@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { Button } from "./ui/button";
+import { Checkbox } from "./ui/checkbox";
+import { Card, CardContent } from "./ui/card";
+import { Volume2, VolumeX, Mic, MicOff, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VoiceControlsProps {
   table: number;
@@ -93,156 +98,113 @@ export default function VoiceControls({
   }
 
   return (
-    <div className="flex flex-col space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-        Contrôles vocaux
-      </h3>
+    <Card>
+      <CardContent className="p-4 space-y-4">
+        <h3 className="text-sm font-medium text-center">
+          Contrôles vocaux
+        </h3>
 
-      <div className="flex flex-wrap gap-3 justify-center">
-        {/* Text-to-Speech Controls */}
-        {ttsSupported && (
-          <div className="flex flex-col items-center space-y-2">
-            <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-              <input
-                type="checkbox"
-                checked={ttsEnabled}
-                onChange={(e) => setTtsEnabled(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Lecture vocale</span>
-            </label>
+        <div className="flex flex-wrap gap-4 justify-center">
+          {/* Text-to-Speech Controls */}
+          {ttsSupported && (
+            <div className="flex flex-col items-center space-y-2">
+              <label className="flex items-center space-x-2 text-sm text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={ttsEnabled}
+                  onCheckedChange={(checked) => setTtsEnabled(checked === true)}
+                />
+                <span>Lecture vocale</span>
+              </label>
 
-            <button
-              onClick={handleReadQuestion}
-              disabled={disabled || !ttsEnabled}
-              className={`p-3 rounded-full transition-all duration-200 ${
-                ttsEnabled && !disabled
-                  ? isPlaying
-                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              title={isPlaying ? "Arrêter la lecture" : "Lire la question"}
-            >
-              {isPlaying ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.814L4.045 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.045l4.338-3.814a1 1 0 011 0zM15 8a3 3 0 000 6V8z"
-                    clipRule="evenodd"
-                  />
-                  <path d="M17.609 6.205a5 5 0 010 7.59l-.707-.707a4 4 0 000-6.176l.707-.707z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        )}
+              <Button
+                onClick={handleReadQuestion}
+                disabled={disabled || !ttsEnabled}
+                variant={isPlaying ? "destructive" : "default"}
+                size="icon"
+                className={cn(
+                  "rounded-full w-12 h-12",
+                  isPlaying && "animate-pulse"
+                )}
+                title={isPlaying ? "Arrêter la lecture" : "Lire la question"}
+              >
+                {isPlaying ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
+          )}
 
-        {/* Speech-to-Text Controls */}
-        {sttSupported && (
-          <div className="flex flex-col items-center space-y-2">
-            <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-              <input
-                type="checkbox"
-                checked={sttEnabled}
-                onChange={(e) => setSttEnabled(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Réponse vocale</span>
-            </label>
+          {/* Speech-to-Text Controls */}
+          {sttSupported && (
+            <div className="flex flex-col items-center space-y-2">
+              <label className="flex items-center space-x-2 text-sm text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={sttEnabled}
+                  onCheckedChange={(checked) => setSttEnabled(checked === true)}
+                />
+                <span>Réponse vocale</span>
+              </label>
 
-            <button
-              onClick={handleVoiceInput}
-              disabled={disabled || !sttEnabled || showFeedback}
-              className={`p-3 rounded-full transition-all duration-200 ${
-                sttEnabled && !disabled && !showFeedback
-                  ? isListening
-                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+              <Button
+                onClick={handleVoiceInput}
+                disabled={disabled || !sttEnabled || showFeedback}
+                variant={isListening ? "destructive" : "secondary"}
+                size="icon"
+                className={cn(
+                  "rounded-full w-12 h-12",
+                  isListening && "animate-pulse",
+                  isProcessing && "animate-spin"
+                )}
+                title={
+                  isListening
+                    ? "Arrêter l'écoute"
                     : isProcessing
-                      ? "bg-yellow-500 text-white animate-spin"
-                      : "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              title={
-                isListening
-                  ? "Arrêter l'écoute"
-                  : isProcessing
                     ? "Traitement en cours..."
                     : "Commencer l'écoute"
-              }
-            >
-              {isProcessing ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Voice Recognition Feedback */}
-      {sttEnabled && (isListening || transcript) && (
-        <div className="text-center">
-          {isListening && (
-            <p className="text-sm text-blue-600 dark:text-blue-400 animate-pulse">
-              🎤 Écoutez... Dites votre réponse
-            </p>
-          )}
-          {transcript && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Entendu : "{transcript}"
-            </p>
+                }
+              >
+                {isProcessing ? (
+                  <Loader2 className="w-5 h-5" />
+                ) : isListening ? (
+                  <MicOff className="w-5 h-5" />
+                ) : (
+                  <Mic className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
           )}
         </div>
-      )}
 
-      {/* Support Information */}
-      <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-        {ttsSupported && sttSupported
-          ? "Lecture et reconnaissance vocale disponibles"
-          : ttsSupported
+        {/* Voice Recognition Feedback */}
+        {sttEnabled && (isListening || transcript) && (
+          <div className="text-center space-y-1">
+            {isListening && (
+              <p className="text-sm text-primary animate-pulse flex items-center justify-center gap-2">
+                <Mic className="w-4 h-4" />
+                Écoutez... Dites votre réponse
+              </p>
+            )}
+            {transcript && (
+              <p className="text-sm text-muted-foreground">
+                Entendu : "{transcript}"
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Support Information */}
+        <div className="text-center text-xs text-muted-foreground">
+          {ttsSupported && sttSupported
+            ? "Lecture et reconnaissance vocale disponibles"
+            : ttsSupported
             ? "Seule la lecture vocale est disponible"
             : sttSupported
-              ? "Seule la reconnaissance vocale est disponible"
-              : "Fonctionnalités vocales non supportées"}
-      </div>
-    </div>
+            ? "Seule la reconnaissance vocale est disponible"
+            : "Fonctionnalités vocales non supportées"}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

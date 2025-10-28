@@ -1,6 +1,8 @@
 
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "Ultrathink - Tables de multiplication",
@@ -14,9 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
-        {children}
+        <ThemeProvider defaultTheme="system" storageKey="ultrathink-ui-theme">
+          <ThemeToggle />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
