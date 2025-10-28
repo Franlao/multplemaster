@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { QuizSettings, TableMode, QuestionMode, Operation, AdvancedSettings as AdvancedSettingsType } from "../types/quiz";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X, Settings } from "lucide-react";
+import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AdvancedSettings } from "./AdvancedSettings";
+import { useEffect } from "react";
+
+const STORAGE_KEY = "ultrathink-settings";
+
+const defaultSettings: AdvancedSettingsType = {
+  tableSelectionMode: "range",
+  tableRangeMin: 1,
+  tableRangeMax: 10,
+  specificTables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  multiplierMin: 0,
+  multiplierMax: 10,
+};
 
 interface QuizSelectionProps {
   onStartQuiz: (settings: QuizSettings) => void;
@@ -19,14 +30,47 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
   const [selectedTables, setSelectedTables] = useState<number[]>([1, 2]);
   const [questionMode, setQuestionMode] = useState<QuestionMode>("sequential");
   const [questionCount, setQuestionCount] = useState<number>(11);
-  const [settings, setSettings] = useState<AdvancedSettingsType>({
-    tableSelectionMode: "range",
-    tableRangeMin: 1,
-    tableRangeMax: 10,
-    specificTables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    multiplierMin: 0,
-    multiplierMax: 10,
-  });
+  const [settings, setSettings] = useState<AdvancedSettingsType>(defaultSettings);
+
+  const handleSettingsChange = useCallback((newSettings: AdvancedSettingsType) => {
+    setSettings(newSettings);
+    // Reset selected table if it's outside new range
+    const availableNumbers = newSettings.tableSelectionMode === "range"
+      ? Array.from({ length: newSettings.tableRangeMax - newSettings.tableRangeMin + 1 }, (_, i) => newSettings.tableRangeMin + i)
+      : newSettings.specificTables;
+
+    if (!availableNumbers.includes(selectedTable)) {
+      setSelectedTable(availableNumbers[0] || 1);
+    }
+
+    // Reset selected tables if any are outside new range
+    setSelectedTables(prev => prev.filter(t => availableNumbers.includes(t)));
+  }, [selectedTable]);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        handleSettingsChange(parsed);
+      }
+    } catch (error) {
+      console.error("Failed to load settings:", error);
+    }
+  }, [handleSettingsChange]);
+
+  // Listen for settings changes from AppNav
+  useEffect(() => {
+    const handleSettingsChanged = (event: CustomEvent<AdvancedSettingsType>) => {
+      handleSettingsChange(event.detail);
+    };
+
+    window.addEventListener("settingsChanged", handleSettingsChanged as EventListener);
+    return () => {
+      window.removeEventListener("settingsChanged", handleSettingsChanged as EventListener);
+    };
+  }, [handleSettingsChange]);
 
   // Get available numbers based on settings
   const getAvailableNumbers = () => {
@@ -76,43 +120,17 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
     onStartQuiz(quizSettings);
   };
 
-  const handleSettingsChange = (newSettings: AdvancedSettingsType) => {
-    setSettings(newSettings);
-    // Reset selected table if it's outside new range
-    const availableNumbers = newSettings.tableSelectionMode === "range"
-      ? Array.from({ length: newSettings.tableRangeMax - newSettings.tableRangeMin + 1 }, (_, i) => newSettings.tableRangeMin + i)
-      : newSettings.specificTables;
-
-    if (!availableNumbers.includes(selectedTable)) {
-      setSelectedTable(availableNumbers[0] || 1);
-    }
-
-    // Reset selected tables if any are outside new range
-    setSelectedTables(prev => prev.filter(t => availableNumbers.includes(t)));
-  };
-
   return (
     <div className="w-full min-h-screen p-3 sm:p-4 md:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <Card className="border-2">
           <CardHeader className="text-center space-y-2 p-4 sm:p-6">
-            <div className="flex justify-between items-start">
-              <div className="flex-1"></div>
-              <div className="flex-1 text-center">
-                <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  Ultrathink
-                </CardTitle>
-                <CardDescription className="text-sm sm:text-base mt-2">
-                  Maîtrisez vos opérations mathématiques
-                </CardDescription>
-              </div>
-              <div className="flex-1 flex justify-end">
-                <AdvancedSettings
-                  settings={settings}
-                  onSettingsChange={handleSettingsChange}
-                />
-              </div>
-            </div>
+            <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Ultrathink
+            </CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              Maîtrisez vos opérations mathématiques
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6">

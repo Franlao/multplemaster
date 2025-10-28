@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AppNav } from "@/components/AppNav";
 
 export const metadata: Metadata = {
   title: "Ultrathink - Tables de multiplication",
@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider defaultTheme="system" storageKey="ultrathink-ui-theme">
-          <ThemeToggle />
+          <AppNav />
           {children}
         </ThemeProvider>
       </body>
