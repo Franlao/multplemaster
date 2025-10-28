@@ -33,7 +33,7 @@ export function ThemeToggle() {
       variant="outline"
       size="icon"
       onClick={toggleTheme}
-      className="fixed top-4 right-4 z-50"
+      className="fixed top-3 right-3 sm:top-4 sm:right-4 z-50 h-9 w-9 sm:h-10 sm:w-10 touch-manipulation"
       title={
         theme === "light"
           ? "Mode sombre"
@@ -43,9 +43,9 @@ export function ThemeToggle() {
       }
     >
       {theme === "dark" ? (
-        <Moon className="h-5 w-5" />
+        <Moon className="h-4 w-4 sm:h-5 sm:w-5" />
       ) : (
-        <Sun className="h-5 w-5" />
+        <Sun className="h-4 w-4 sm:h-5 sm:w-5" />
       )}
       <span className="sr-only">Changer de thème</span>
     </Button>
