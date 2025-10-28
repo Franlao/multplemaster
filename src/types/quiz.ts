@@ -18,6 +18,15 @@ export interface Question {
   multiplier?: number;
 }
 
+export interface AdvancedSettings {
+  tableSelectionMode: "range" | "specific";
+  tableRangeMin: number;
+  tableRangeMax: number;
+  specificTables: number[];
+  multiplierMin: number;
+  multiplierMax: number;
+}
+
 export interface QuizSettings {
   operation: Operation;
   tableMode: TableMode;
@@ -25,6 +34,7 @@ export interface QuizSettings {
   selectedTables?: number[];
   questionMode: QuestionMode;
   questionCount: number;
+  advancedSettings?: AdvancedSettings;
 }
 
 export interface QuizSession {

@@ -1,35 +1,45 @@
 import { Question, QuizSettings, Operation } from "../types/quiz";
 
 export function generateQuestions(settings: QuizSettings): Question[] {
-  const { operation, tableMode, selectedTable, selectedTables, questionMode, questionCount } = settings;
+  const { operation, tableMode, selectedTable, selectedTables, questionMode, questionCount, advancedSettings } = settings;
 
   const questions: Question[] = [];
 
-  if (tableMode === "specific" && selectedTable !== undefined) {
-    // Generate questions for a specific number
-    const secondNumbers =
-      questionMode === "sequential"
-        ? getSequentialNumbers(questionCount, operation)
-        : getRandomNumbers(questionCount, operation);
+  // Determine first numbers based on advanced settings or mode
+  let firstNumbers: number[] = [];
 
-    secondNumbers.forEach((secondNumber, index) => {
-      questions.push(createQuestion(operation, selectedTable, secondNumber, index));
-    });
+  if (advancedSettings) {
+    if (advancedSettings.tableSelectionMode === "range") {
+      // Use range from advanced settings
+      firstNumbers = Array.from(
+        { length: advancedSettings.tableRangeMax - advancedSettings.tableRangeMin + 1 },
+        (_, i) => advancedSettings.tableRangeMin + i
+      );
+    } else {
+      // Use specific tables from advanced settings
+      firstNumbers = [...advancedSettings.specificTables];
+    }
+  } else if (tableMode === "specific" && selectedTable !== undefined) {
+    firstNumbers = [selectedTable];
   } else if (tableMode === "multiple" && selectedTables && selectedTables.length > 0) {
-    // Generate questions for multiple selected numbers
-    const questionsPerNumber = Math.floor(questionCount / selectedTables.length);
-    const extraQuestions = questionCount % selectedTables.length;
+    firstNumbers = [...selectedTables];
+  }
 
-    selectedTables.forEach((firstNumber, numberIndex) => {
+  if (firstNumbers.length > 0) {
+    // Generate questions for specified first numbers
+    const questionsPerNumber = Math.floor(questionCount / firstNumbers.length);
+    const extraQuestions = questionCount % firstNumbers.length;
+
+    firstNumbers.forEach((firstNumber, numberIndex) => {
       const questionsForThisNumber = questionsPerNumber + (numberIndex < extraQuestions ? 1 : 0);
 
       if (questionMode === "sequential") {
-        const secondNumbers = getSequentialNumbers(questionsForThisNumber, operation);
+        const secondNumbers = getSequentialNumbers(questionsForThisNumber, operation, advancedSettings);
         secondNumbers.forEach((secondNumber) => {
           questions.push(createQuestion(operation, firstNumber, secondNumber, questions.length));
         });
       } else {
-        const secondNumbers = getRandomNumbers(questionsForThisNumber, operation);
+        const secondNumbers = getRandomNumbers(questionsForThisNumber, operation, advancedSettings);
         secondNumbers.forEach((secondNumber) => {
           questions.push(createQuestion(operation, firstNumber, secondNumber, questions.length));
         });
@@ -38,13 +48,13 @@ export function generateQuestions(settings: QuizSettings): Question[] {
   } else {
     // Generate questions with random numbers
     for (let i = 0; i < questionCount; i++) {
-      const firstNumber = getRandomNumberForOperation(operation);
-      const secondNumber = getRandomNumberForOperation(operation);
+      const firstNumber = getRandomNumberForOperation(operation, advancedSettings);
+      const secondNumber = getRandomNumberForOperation(operation, advancedSettings);
       questions.push(createQuestion(operation, firstNumber, secondNumber, i));
     }
   }
 
-  return questionMode === "random" && (tableMode === "specific" || tableMode === "multiple")
+  return questionMode === "random" && firstNumbers.length > 0
     ? shuffleArray(questions)
     : questions;
 }
@@ -91,28 +101,80 @@ function createQuestion(
   };
 }
 
-function getSequentialNumbers(count: number, operation: Operation): number[] {
+function getSequentialNumbers(
+  count: number,
+  operation: Operation,
+  advancedSettings?: QuizSettings["advancedSettings"]
+): number[] {
   const numbers: number[] = [];
-  const maxRange = operation === "multiplication" ? 21 : 101; // 0-20 for mult, 0-100 for add/sub
 
-  for (let i = 0; i < Math.min(count, maxRange); i++) {
+  let min: number;
+  let max: number;
+
+  if (advancedSettings) {
+    min = advancedSettings.multiplierMin;
+    max = advancedSettings.multiplierMax;
+  } else {
+    // Default ranges
+    min = 0;
+    max = operation === "multiplication" ? 20 : 100;
+  }
+
+  for (let i = min; i <= max && numbers.length < count; i++) {
     numbers.push(i);
   }
   return numbers;
 }
 
-function getRandomNumbers(count: number, operation: Operation): number[] {
-  const maxRange = operation === "multiplication" ? 21 : 101;
-  const numbers = Array.from({ length: maxRange }, (_, i) => i);
+function getRandomNumbers(
+  count: number,
+  operation: Operation,
+  advancedSettings?: QuizSettings["advancedSettings"]
+): number[] {
+  let min: number;
+  let max: number;
+
+  if (advancedSettings) {
+    min = advancedSettings.multiplierMin;
+    max = advancedSettings.multiplierMax;
+  } else {
+    // Default ranges
+    min = 0;
+    max = operation === "multiplication" ? 20 : 100;
+  }
+
+  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   return shuffleArray(numbers).slice(0, count);
 }
 
-function getRandomNumberForOperation(operation: Operation): number {
-  if (operation === "multiplication") {
-    return Math.floor(Math.random() * 36); // 0-35 for multiplication
+function getRandomNumberForOperation(
+  operation: Operation,
+  advancedSettings?: QuizSettings["advancedSettings"]
+): number {
+  let min: number;
+  let max: number;
+
+  if (advancedSettings) {
+    if (advancedSettings.tableSelectionMode === "range") {
+      min = advancedSettings.tableRangeMin;
+      max = advancedSettings.tableRangeMax;
+    } else {
+      // Pick randomly from specific tables
+      const tables = advancedSettings.specificTables;
+      return tables[Math.floor(Math.random() * tables.length)];
+    }
   } else {
-    return Math.floor(Math.random() * 101); // 0-100 for addition/subtraction
+    // Default ranges
+    if (operation === "multiplication") {
+      min = 0;
+      max = 35;
+    } else {
+      min = 0;
+      max = 100;
+    }
   }
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function shuffleArray<T>(array: T[]): T[] {

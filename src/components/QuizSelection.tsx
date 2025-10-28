@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { QuizSettings, TableMode, QuestionMode, Operation } from "../types/quiz";
+import { QuizSettings, TableMode, QuestionMode, Operation, AdvancedSettings as AdvancedSettingsType } from "../types/quiz";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { BookOpen, Grid3x3, Shuffle, ArrowRight, ListOrdered, Dices, Plus, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdvancedSettings } from "./AdvancedSettings";
 
 interface QuizSelectionProps {
   onStartQuiz: (settings: QuizSettings) => void;
@@ -18,6 +19,15 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
   const [selectedTables, setSelectedTables] = useState<number[]>([1, 2]);
   const [questionMode, setQuestionMode] = useState<QuestionMode>("sequential");
   const [questionCount, setQuestionCount] = useState<number>(21);
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettingsType>({
+    tableSelectionMode: "range",
+    tableRangeMin: 1,
+    tableRangeMax: 10,
+    specificTables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    multiplierMin: 0,
+    multiplierMax: 10,
+  });
+  const [useAdvancedSettings, setUseAdvancedSettings] = useState(false);
 
   const getMaxRange = () => operation === "multiplication" ? 36 : 101;
   const getMaxQuestions = () => operation === "multiplication" ? 21 : 101;
@@ -50,8 +60,14 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
       questionMode,
       questionCount:
         tableMode === "specific" ? Math.min(questionCount, maxQuestions) : questionCount,
+      advancedSettings: useAdvancedSettings ? advancedSettings : undefined,
     };
     onStartQuiz(settings);
+  };
+
+  const handleAdvancedSettingsChange = (newSettings: AdvancedSettingsType) => {
+    setAdvancedSettings(newSettings);
+    setUseAdvancedSettings(true);
   };
 
   return (
@@ -59,12 +75,23 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
       <div className="max-w-4xl mx-auto">
         <Card className="border-2">
           <CardHeader className="text-center space-y-2 p-4 sm:p-6">
-            <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Ultrathink
-            </CardTitle>
-            <CardDescription className="text-sm sm:text-base">
-              Maîtrisez vos opérations mathématiques
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div className="flex-1"></div>
+              <div className="flex-1 text-center">
+                <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  Ultrathink
+                </CardTitle>
+                <CardDescription className="text-sm sm:text-base mt-2">
+                  Maîtrisez vos opérations mathématiques
+                </CardDescription>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <AdvancedSettings
+                  settings={advancedSettings}
+                  onSettingsChange={handleAdvancedSettingsChange}
+                />
+              </div>
+            </div>
           </CardHeader>
 
           <CardContent className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6">
