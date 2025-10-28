@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Question } from "../types/quiz";
 import VoiceControls from "./VoiceControls";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Progress } from "./ui/progress";
+import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, RotateCcw, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface QuizGameProps {
   currentQuestion: Question;
@@ -73,138 +79,145 @@ export default function QuizGame({
   }, [currentQuestion.correctAnswer, onSubmitAnswer, showFeedback]);
 
   return (
-    <div className="max-w-2xl mx-auto p-8 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-8">
-        {/* Header with Progress */}
-        <div className="space-y-4">
+    <div className="max-w-3xl mx-auto p-6 md:p-8">
+      <Card className="border-2">
+        <CardHeader className="space-y-4">
+          {/* Header with Progress */}
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {isRetryPhase ? "🔄 Révision" : "Quiz"}
-            </h1>
-            <button
+            <CardTitle className="flex items-center gap-2">
+              {isRetryPhase && <RotateCcw className="w-5 h-5 text-warning" />}
+              {isRetryPhase ? "Révision" : "Quiz"}
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onResetQuiz}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              ← Retour
-            </button>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour
+            </Button>
           </div>
 
           {/* Progress Bar */}
           <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>
                 Question {progress.current} sur {progress.total}
               </span>
-              <span>{progress.percentage}%</span>
+              <span className="font-medium">{progress.percentage}%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress.percentage}%` }}
-              />
-            </div>
+            <Progress value={progress.percentage} max={100} />
           </div>
 
           {isRetryPhase && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-              <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                💡 Phase de révision : Questions manquées à refaire
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+              <Info className="w-5 h-5 text-warning mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-warning-foreground">
+                Phase de révision : Questions manquées à refaire
               </p>
             </div>
           )}
-        </div>
+        </CardHeader>
 
-        {/* Question Display */}
-        <div className="text-center space-y-6">
-          <div className="text-6xl font-bold text-gray-900 dark:text-white animate-in zoom-in duration-500">
-            {currentQuestion.table} × {currentQuestion.multiplier} = ?
+        <CardContent className="space-y-8">
+          {/* Question Display */}
+          <div className="text-center space-y-6">
+            <div className="text-5xl md:text-6xl font-bold">
+              {currentQuestion.table} × {currentQuestion.multiplier} = ?
+            </div>
+
+            {!showFeedback ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <Input
+                  ref={inputRef}
+                  type="number"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Votre réponse"
+                  className="text-3xl text-center py-6 h-auto"
+                  onKeyPress={handleKeyPress}
+                />
+
+                <Button
+                  type="submit"
+                  disabled={!userInput}
+                  size="lg"
+                  className="w-full text-lg"
+                >
+                  Valider
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-6">
+                {/* Feedback */}
+                <div
+                  className={cn(
+                    "p-6 rounded-lg border-2",
+                    isCorrect
+                      ? "bg-success/10 border-success/30"
+                      : "bg-destructive/10 border-destructive/30"
+                  )}
+                >
+                  <div className="text-center space-y-3">
+                    <div className="flex justify-center">
+                      {isCorrect ? (
+                        <CheckCircle2 className="w-16 h-16 text-success" />
+                      ) : (
+                        <XCircle className="w-16 h-16 text-destructive" />
+                      )}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-xl font-semibold",
+                        isCorrect ? "text-success" : "text-destructive"
+                      )}
+                    >
+                      {isCorrect ? "Correct !" : "Incorrect"}
+                    </div>
+                    {!isCorrect && (
+                      <div className="text-base">
+                        La bonne réponse est :{" "}
+                        <span className="font-bold text-lg">
+                          {currentQuestion.correctAnswer}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Next Button */}
+                <Button
+                  onClick={handleNext}
+                  size="lg"
+                  className="w-full text-lg"
+                >
+                  Question suivante
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
+            )}
           </div>
 
-          {!showFeedback ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input
-                ref={inputRef}
-                type="number"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Votre réponse"
-                className="w-full text-4xl text-center py-4 px-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none transition-colors"
-                onKeyPress={handleKeyPress}
-              />
+          {/* Voice Controls */}
+          <VoiceControls
+            table={currentQuestion.table}
+            multiplier={currentQuestion.multiplier}
+            onVoiceAnswer={handleVoiceAnswer}
+            isCorrect={isCorrect}
+            correctAnswer={currentQuestion.correctAnswer}
+            showFeedback={showFeedback}
+            disabled={showFeedback}
+          />
 
-              <button
-                type="submit"
-                disabled={!userInput}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 text-lg"
-              >
-                Valider
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-6">
-              {/* Feedback */}
-              <div
-                className={`p-6 rounded-xl animate-in zoom-in duration-500 ${
-                  isCorrect
-                    ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
-                    : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
-                }`}
-              >
-                <div className="text-center space-y-2">
-                  <div
-                    className={`text-4xl animate-bounce ${isCorrect ? "animate-pulse" : ""}`}
-                  >
-                    {isCorrect ? "✅" : "❌"}
-                  </div>
-                  <div
-                    className={`text-xl font-semibold ${
-                      isCorrect
-                        ? "text-green-800 dark:text-green-200"
-                        : "text-red-800 dark:text-red-200"
-                    }`}
-                  >
-                    {isCorrect ? "Correct !" : "Incorrect"}
-                  </div>
-                  {!isCorrect && (
-                    <div className="text-lg text-gray-700 dark:text-gray-300">
-                      La bonne réponse est :{" "}
-                      <span className="font-bold">
-                        {currentQuestion.correctAnswer}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 text-lg"
-              >
-                Question suivante
-              </button>
+          {/* Question Info */}
+          {currentQuestion.attempts > 0 && (
+            <div className="text-center text-sm text-muted-foreground">
+              Tentatives : {currentQuestion.attempts + 1}
             </div>
           )}
-        </div>
-
-        {/* Voice Controls */}
-        <VoiceControls
-          table={currentQuestion.table}
-          multiplier={currentQuestion.multiplier}
-          onVoiceAnswer={handleVoiceAnswer}
-          isCorrect={isCorrect}
-          correctAnswer={currentQuestion.correctAnswer}
-          showFeedback={showFeedback}
-          disabled={showFeedback}
-        />
-
-        {/* Question Info */}
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {currentQuestion.attempts > 0 && (
-            <p>Tentatives : {currentQuestion.attempts + 1}</p>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

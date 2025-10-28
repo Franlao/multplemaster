@@ -1,6 +1,22 @@
 "use client";
 
 import type { QuizSession, QuizStats } from "../types/quiz";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { Badge } from "./ui/badge";
+import {
+  Trophy,
+  Star,
+  ThumbsUp,
+  Target,
+  Clock,
+  BarChart3,
+  RotateCcw,
+  Plus,
+  CheckCircle2,
+  List
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface QuizResultsProps {
   session: QuizSession;
@@ -32,177 +48,189 @@ export default function QuizResults({
   };
 
   const getAccuracyColor = (acc: number) => {
-    if (acc >= 90) return "text-green-600 dark:text-green-400";
-    if (acc >= 70) return "text-yellow-600 dark:text-yellow-400";
-    return "text-red-600 dark:text-red-400";
+    if (acc >= 90) return "text-success";
+    if (acc >= 70) return "text-warning";
+    return "text-destructive";
   };
 
-  const getAccuracyEmoji = (acc: number) => {
-    if (acc === 100) return "🏆";
-    if (acc >= 90) return "🌟";
-    if (acc >= 70) return "👍";
-    return "💪";
+  const getAccuracyIcon = (acc: number) => {
+    if (acc === 100) return <Trophy className="w-16 h-16 text-success" />;
+    if (acc >= 90) return <Star className="w-16 h-16 text-success" />;
+    if (acc >= 70) return <ThumbsUp className="w-16 h-16 text-warning" />;
+    return <Target className="w-16 h-16 text-destructive" />;
+  };
+
+  const getMotivationalMessage = (acc: number) => {
+    if (acc === 100) return "Parfait ! Vous maîtrisez cette table !";
+    if (acc >= 90) return "Excellent travail ! Encore un petit effort !";
+    if (acc >= 70) return "Bon travail ! Continuez à vous entraîner !";
+    return "Ne vous découragez pas ! La pratique mène à la perfection !";
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8 animate-in fade-in duration-700">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="text-6xl animate-in zoom-in duration-1000 animate-bounce">
-            {getAccuracyEmoji(accuracy)}
+    <div className="max-w-4xl mx-auto p-6 md:p-8">
+      <Card className="border-2">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            {getAccuracyIcon(accuracy)}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-top duration-700 delay-300">
-            Quiz terminé !
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 animate-in slide-in-from-top duration-700 delay-500">
-            Félicitations pour avoir terminé cette session
-          </p>
-        </div>
+          <CardTitle className="text-3xl">Quiz terminé !</CardTitle>
+          <CardDescription className="text-base">
+            {getMotivationalMessage(accuracy)}
+          </CardDescription>
+        </CardHeader>
 
-        {/* Results Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 text-center animate-in slide-in-from-left duration-500 delay-700 hover:scale-105 transition-transform">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-              {session.correctAnswers}
-            </div>
-            <div className="text-sm text-blue-800 dark:text-blue-200">
-              Bonnes réponses
-            </div>
+        <CardContent className="space-y-6">
+          {/* Results Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <div className="text-3xl font-bold text-primary">
+                  {session.correctAnswers}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Bonnes réponses
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <List className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <div className="text-3xl font-bold">
+                  {session.totalQuestions}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Questions totales
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Target className="w-8 h-8 mx-auto mb-2 text-success" />
+                <div className={cn("text-3xl font-bold", getAccuracyColor(accuracy))}>
+                  {accuracy}%
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Précision
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <div className="text-3xl font-bold">
+                  {formatDuration(duration)}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Temps total
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center animate-in slide-in-from-right duration-500 delay-700 hover:scale-105 transition-transform">
-            <div className="text-3xl font-bold text-gray-600 dark:text-gray-400">
-              {session.totalQuestions}
-            </div>
-            <div className="text-sm text-gray-800 dark:text-gray-200">
-              Questions totales
-            </div>
-          </div>
+          {/* Session Details */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Détails de la session
+            </h3>
 
-          <div
-            className={`bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center animate-in slide-in-from-left duration-500 delay-1000 hover:scale-105 transition-transform`}
-          >
-            <div className={`text-3xl font-bold ${getAccuracyColor(accuracy)}`}>
-              {accuracy}%
-            </div>
-            <div className="text-sm text-green-800 dark:text-green-200">
-              Précision
-            </div>
-          </div>
-
-          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6 text-center animate-in slide-in-from-right duration-500 delay-1000 hover:scale-105 transition-transform">
-            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-              {formatDuration(duration)}
-            </div>
-            <div className="text-sm text-purple-800 dark:text-purple-200">
-              Temps total
-            </div>
-          </div>
-        </div>
-
-        {/* Session Details */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Détails de la session
-          </h2>
-
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Mode table :
-              </span>
-              <span className="font-medium">
-                {session.settings.tableMode === "specific"
-                  ? `Table de ${session.settings.selectedTable}`
-                  : "Tables aléatoires"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Mode questions :
-              </span>
-              <span className="font-medium">
-                {session.settings.questionMode === "sequential"
-                  ? "Séquentiel"
-                  : "Aléatoire"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Questions ratées :
-              </span>
-              <span className="font-medium">
-                {session.questions.filter((q) => !q.isCorrect).length}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Overall Stats */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Statistiques globales
-          </h2>
-
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Sessions totales :
-              </span>
-              <span className="font-medium">{stats.totalSessions}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Questions totales :
-              </span>
-              <span className="font-medium">{stats.totalQuestions}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
-                Précision moyenne :
-              </span>
-              <span
-                className={`font-medium ${getAccuracyColor(stats.averageAccuracy)}`}
-              >
-                {Math.round(stats.averageAccuracy)}%
-              </span>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Mode table :
+                </span>
+                <Badge variant="secondary">
+                  {session.settings.tableMode === "specific"
+                    ? `Table de ${session.settings.selectedTable}`
+                    : session.settings.tableMode === "multiple"
+                    ? `Tables multiples (${session.settings.selectedTables?.join(', ')})`
+                    : "Tables aléatoires"}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Mode questions :
+                </span>
+                <Badge variant="secondary">
+                  {session.settings.questionMode === "sequential"
+                    ? "Séquentiel"
+                    : "Aléatoire"}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Questions ratées :
+                </span>
+                <Badge variant={session.questions.filter((q) => !q.isCorrect).length > 0 ? "destructive" : "success"}>
+                  {session.questions.filter((q) => !q.isCorrect).length}
+                </Badge>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={onNewQuiz}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 text-lg"
-          >
-            Nouveau quiz
-          </button>
+          {/* Overall Stats */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Statistiques globales
+            </h3>
 
-          {accuracy < 100 && (
-            <button
-              onClick={onReviewErrors}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Sessions totales :
+                </span>
+                <span className="font-semibold">{stats.totalSessions}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Questions totales :
+                </span>
+                <span className="font-semibold">{stats.totalQuestions}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  Précision moyenne :
+                </span>
+                <span
+                  className={cn("font-semibold", getAccuracyColor(stats.averageAccuracy))}
+                >
+                  {Math.round(stats.averageAccuracy)}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              onClick={onNewQuiz}
+              size="lg"
+              className="w-full text-base"
             >
-              Réviser les erreurs
-            </button>
-          )}
-        </div>
+              <Plus className="w-5 h-5 mr-2" />
+              Nouveau quiz
+            </Button>
 
-        {/* Motivational Message */}
-        <div className="text-center text-gray-600 dark:text-gray-400 text-sm">
-          {accuracy === 100 && "🎉 Parfait ! Vous maîtrisez cette table !"}
-          {accuracy >= 90 &&
-            accuracy < 100 &&
-            "✨ Excellent travail ! Encore un petit effort !"}
-          {accuracy >= 70 &&
-            accuracy < 90 &&
-            "👏 Bon travail ! Continuez à vous entraîner !"}
-          {accuracy < 70 &&
-            "💪 Ne vous découragez pas ! La pratique mène à la perfection !"}
-        </div>
-      </div>
+            {accuracy < 100 && (
+              <Button
+                onClick={onReviewErrors}
+                variant="secondary"
+                size="lg"
+                className="w-full text-base"
+              >
+                <RotateCcw className="w-5 h-5 mr-2" />
+                Réviser les erreurs
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
