@@ -18,8 +18,8 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
   const [selectedTable, setSelectedTable] = useState<number>(1);
   const [selectedTables, setSelectedTables] = useState<number[]>([1, 2]);
   const [questionMode, setQuestionMode] = useState<QuestionMode>("sequential");
-  const [questionCount, setQuestionCount] = useState<number>(21);
-  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettingsType>({
+  const [questionCount, setQuestionCount] = useState<number>(11);
+  const [settings, setSettings] = useState<AdvancedSettingsType>({
     tableSelectionMode: "range",
     tableRangeMin: 1,
     tableRangeMax: 10,
@@ -27,10 +27,22 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
     multiplierMin: 0,
     multiplierMax: 10,
   });
-  const [useAdvancedSettings, setUseAdvancedSettings] = useState(false);
 
-  const getMaxRange = () => operation === "multiplication" ? 36 : 101;
-  const getMaxQuestions = () => operation === "multiplication" ? 21 : 101;
+  // Get available numbers based on settings
+  const getAvailableNumbers = () => {
+    if (settings.tableSelectionMode === "range") {
+      return Array.from(
+        { length: settings.tableRangeMax - settings.tableRangeMin + 1 },
+        (_, i) => settings.tableRangeMin + i
+      );
+    } else {
+      return settings.specificTables;
+    }
+  };
+
+  const getMaxQuestions = () => {
+    return settings.multiplierMax - settings.multiplierMin + 1;
+  };
 
   const getOperationLabel = () => {
     switch (operation) {
@@ -52,22 +64,31 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
 
   const handleStartQuiz = () => {
     const maxQuestions = getMaxQuestions();
-    const settings: QuizSettings = {
+    const quizSettings: QuizSettings = {
       operation,
       tableMode,
       selectedTable: tableMode === "specific" ? selectedTable : undefined,
       selectedTables: tableMode === "multiple" ? selectedTables : undefined,
       questionMode,
-      questionCount:
-        tableMode === "specific" ? Math.min(questionCount, maxQuestions) : questionCount,
-      advancedSettings: useAdvancedSettings ? advancedSettings : undefined,
+      questionCount: Math.min(questionCount, maxQuestions * getAvailableNumbers().length),
+      advancedSettings: settings,
     };
-    onStartQuiz(settings);
+    onStartQuiz(quizSettings);
   };
 
-  const handleAdvancedSettingsChange = (newSettings: AdvancedSettingsType) => {
-    setAdvancedSettings(newSettings);
-    setUseAdvancedSettings(true);
+  const handleSettingsChange = (newSettings: AdvancedSettingsType) => {
+    setSettings(newSettings);
+    // Reset selected table if it's outside new range
+    const availableNumbers = newSettings.tableSelectionMode === "range"
+      ? Array.from({ length: newSettings.tableRangeMax - newSettings.tableRangeMin + 1 }, (_, i) => newSettings.tableRangeMin + i)
+      : newSettings.specificTables;
+
+    if (!availableNumbers.includes(selectedTable)) {
+      setSelectedTable(availableNumbers[0] || 1);
+    }
+
+    // Reset selected tables if any are outside new range
+    setSelectedTables(prev => prev.filter(t => availableNumbers.includes(t)));
   };
 
   return (
@@ -87,9 +108,8 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
               </div>
               <div className="flex-1 flex justify-end">
                 <AdvancedSettings
-                  settings={advancedSettings}
-                  onSettingsChange={handleAdvancedSettingsChange}
-                  isActive={useAdvancedSettings}
+                  settings={settings}
+                  onSettingsChange={handleSettingsChange}
                 />
               </div>
             </div>
@@ -160,48 +180,14 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             </div>
           </div>
 
-          {/* Advanced Settings Active Indicator */}
-          {useAdvancedSettings && (
-            <div className="p-3 sm:p-4 rounded-lg bg-primary/10 border-2 border-primary">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-sm sm:text-base">Paramètres avancés actifs</span>
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-                    <div>
-                      <strong>Nombres:</strong>{" "}
-                      {advancedSettings.tableSelectionMode === "range"
-                        ? `${advancedSettings.tableRangeMin} à ${advancedSettings.tableRangeMax}`
-                        : `${advancedSettings.specificTables.length} sélectionné(s)`}
-                    </div>
-                    <div>
-                      <strong>Multiplicateurs:</strong> {advancedSettings.multiplierMin} à {advancedSettings.multiplierMax}
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUseAdvancedSettings(false)}
-                  className="h-8 text-xs"
-                >
-                  Désactiver
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Number Selection */}
-          {!useAdvancedSettings && (
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                Choix des nombres
-              </h3>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+              Choix des nombres
+            </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => setTableMode("specific")}
                 className={cn(
@@ -261,10 +247,10 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
             {tableMode === "specific" && (
               <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-muted/50">
                 <label className="block text-xs sm:text-sm font-medium">
-                  Nombre de base (0-{getMaxRange() - 1})
+                  Nombre de base ({settings.tableRangeMin}-{settings.tableRangeMax})
                 </label>
                 <div className="grid grid-cols-4 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-9 gap-1.5 sm:gap-2">
-                  {Array.from({ length: getMaxRange() }, (_, i) => i).map((num) => (
+                  {getAvailableNumbers().map((num) => (
                     <Button
                       key={num}
                       variant={selectedTable === num ? "default" : "outline"}
@@ -289,7 +275,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                   {selectedTables.length} nombre{selectedTables.length > 1 ? 's' : ''} sélectionné{selectedTables.length > 1 ? 's' : ''}: {selectedTables.join(', ')}
                 </p>
                 <div className="grid grid-cols-4 xs:grid-cols-6 sm:grid-cols-8 md:grid-cols-9 gap-1.5 sm:gap-2">
-                  {Array.from({ length: getMaxRange() }, (_, i) => i).map((num) => (
+                  {getAvailableNumbers().map((num) => (
                     <Button
                       key={num}
                       variant={selectedTables.includes(num) ? "default" : "outline"}
@@ -303,8 +289,7 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
                 </div>
               </div>
             )}
-            </div>
-          )}
+          </div>
 
           {/* Question Mode Selection */}
           <div className="space-y-3 sm:space-y-4">
@@ -352,21 +337,26 @@ export default function QuizSelection({ onStartQuiz }: QuizSelectionProps) {
 
           {/* Question Count */}
           <div className="space-y-3">
-            <label className="block text-xs sm:text-sm font-medium">
-              Nombre de questions
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs sm:text-sm font-medium">
+                Nombre de questions
+              </label>
+              <span className="text-xs text-muted-foreground">
+                Multiplicateurs: {settings.multiplierMin}-{settings.multiplierMax}
+              </span>
+            </div>
             <input
               type="range"
-              min={tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}
-              max={tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? selectedTables.length * getMaxQuestions() : 50}
+              min={1}
+              max={tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? Math.min(selectedTables.length * getMaxQuestions(), 100) : 50}
               value={questionCount}
               onChange={(e) => setQuestionCount(parseInt(e.target.value, 10))}
               className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary touch-manipulation"
             />
             <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-              <span>{tableMode === "specific" ? 1 : tableMode === "multiple" ? selectedTables.length : 5}</span>
+              <span>1</span>
               <span className="font-semibold text-foreground">{questionCount} questions</span>
-              <span>{tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? selectedTables.length * getMaxQuestions() : 50}</span>
+              <span>{tableMode === "specific" ? getMaxQuestions() : tableMode === "multiple" ? Math.min(selectedTables.length * getMaxQuestions(), 100) : 50}</span>
             </div>
           </div>
 
